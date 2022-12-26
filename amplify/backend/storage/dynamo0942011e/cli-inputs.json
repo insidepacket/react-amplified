@@ -1,0 +1,14 @@
+{
+  "resourceName": "dynamo0942011e",
+  "tableName": "dynamo0942011e",
+  "partitionKey": {
+    "fieldName": "orderid",
+    "fieldType": "string"
+  },
+  "sortKey": {
+    "fieldName": "userid",
+    "fieldType": "string"
+  },
+  "gsi": [],
+  "triggerFunctions": []
+}

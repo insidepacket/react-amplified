@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "paths": {
+    "/coffee": {
+      "name": "/coffee",
+      "lambdaFunction": "reactamplified0f0874a5",
+      "permissions": {
+        "setting": "open"
+      }
+    }
+  }
+}
