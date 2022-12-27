@@ -39,12 +39,15 @@ function App({ signOut, user }) {
     setFormData({ ...formData, [key]: value, 'userid': username })
   }
 
-   // for getData() function's response
+   //for GetData response
   const [jsonObjects, setJsonObjects] = useState([]); // the data varibale is json object
   const [error, setError] = useState(null);
 
-  // for postData() function's input
+  //for handleSumit input
   const [selectedOption, setSelectedOption] = useState(null);
+
+  //for handleSumit API response
+   const [postDataResponse, setDataPostResponse] = useState(null);
 
   //for cancelData() function's input
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
@@ -67,9 +70,7 @@ function App({ signOut, user }) {
       };
       try {
         const response = await API.get(apiName, path, myInit); //response is a json string
-        //console.log("API response: " + response);
-        //setData(response);
-        console.log("response: " + response);
+        //console.log("response: " + response);
         const data = JSON.parse(response)
         setJsonObjects(data);
         } catch (error) {
@@ -78,26 +79,38 @@ function App({ signOut, user }) {
     }
     getData();
   }, [username]);
-  //postData
-  async function postData(username) {
-    const apiName = 'api960f605b';
-    const path = '/coffee';
-    const myInit = {
-      body: formData, // replace this with attributes you need
-      headers: {
-        Authorization: `Bearer ${(await Auth.currentSession())
-          .getIdToken()
-          .getJwtToken()}`
-    }
-    };
-    console.log(formData);
-    return await API.post(apiName, path, myInit);
-  }
 
-   function handleSumit(event) {
+  //postData
+  const handleSumit = async (event) => {
     event.preventDefault();
-    postData(); 
+    try {
+      const apiName = 'api960f605b';
+      const path = '/coffee';
+      const myInit = {
+        body: formData, 
+        headers: {
+          Authorization: `Bearer ${(await Auth.currentSession())
+            .getIdToken()
+            .getJwtToken()}`
+        }
+      };
+      //console.log(formData);
+      const dataResponse = await API.post(apiName, path, myInit); 
+      //interestingly the API response is a JSON object
+      const postDataResponse = JSON.stringify(dataResponse);
+      //console.log("postDataResponse: "+ postDataResponse);
+      setDataPostResponse(postDataResponse);
+      openPopup(dataResponse)
+    } catch (error) {
+      console.log(error);
+    }
+    window.location.reload();
   }
+   
+  const openPopup = (data) => {
+    const popup = window.open();
+    popup.document.write(JSON.stringify(data, null, 2));
+  };
   
   //cancelorder
   async function cancelOrder(odrerid) {
@@ -161,7 +174,7 @@ function App({ signOut, user }) {
           </select>
           <br></br>
           <button type="submit" style={styles.submitbutton}>Submit</button>
-      </form>
+      </form>  
       <h3> Your Current Orders </h3>
       <table style={styles.table}>
         <thead>
@@ -188,7 +201,6 @@ function App({ signOut, user }) {
           ))}
         </tbody>   
        </table>
-       <p>{error} </p>
        <br></br>
        <Button onClick={handleCancelOrders} style={styles.submitbutton}>Cancel Order</Button>
     </div>
