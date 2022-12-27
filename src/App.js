@@ -27,36 +27,32 @@ Amplify.configure({
 });
 
 //const APIEndPoint = 'https://o78zg3fl3j.execute-api.ap-southeast-2.amazonaws.com/dev/coffee';
-const initialState = { "userid": '', "coffee": '' };
+const initialState = { "userid": '', "coffee": 'Cuppuccino' };
 
 
 function App({ signOut, user }) {
+  //initiate the formdata
   const [formData, setFormData] = useState(initialState)
+  // define function to set value of formdata
   const username = user.username
   function setInput(key, value) { 
     setFormData({ ...formData, [key]: value, 'userid': username })
   }
 
-
-  const [data, setData] = useState();
+   // for getData() function's response
+  const [jsonObjects, setJsonObjects] = useState([]); // the data varibale is json object
   const [error, setError] = useState(null);
-  const [checkedLattee, setLatteChecked] = useState(false);
-  const [checkedFlatWhite, setFlatwhiteChecked] = useState(false);
-  const [checkedCuppuccino, setCuppuccinoChecked] = useState(false);
-  const [checkedHotChocolate, setHotChocolateChecked] = useState(false);
 
-  /*
+  // for postData() function's input
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  //for cancelData() function's input
+  const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+
+
+  //getData()
   useEffect(() => {
-    async function fetchData() {
-      const response = await fetch(APIEndPoint);
-      const json = await response.json();
-      setData(json);
-    }
-    fetchData();
-  }, []);
-  */
-  useEffect(() => {
-    async function getData(username) {
+    async function getData() {
       const apiName = 'api960f605b';
       const path = '/coffee';
       const myInit = {
@@ -72,16 +68,17 @@ function App({ signOut, user }) {
       try {
         const response = await API.get(apiName, path, myInit); //response is a json string
         //console.log("API response: " + response);
-        setData(response);
+        //setData(response);
+        console.log("response: " + response);
+        const data = JSON.parse(response)
+        setJsonObjects(data);
         } catch (error) {
         setError(error);
         }
     }
-    getData(username);
+    getData();
   }, [username]);
-   
-
-
+  //postData
   async function postData(username) {
     const apiName = 'api960f605b';
     const path = '/coffee';
@@ -97,35 +94,50 @@ function App({ signOut, user }) {
     return await API.post(apiName, path, myInit);
   }
 
-  function handleSumit(event) {
+   function handleSumit(event) {
     event.preventDefault();
     postData(); 
   }
   
-  const handleLatteeCheckboxChange = (event) => {
-    setLatteChecked(event.target.checked);
+  //cancelorder
+  async function cancelOrder(odrerid) {
+    const apiName = 'api960f605b';
+    const path = '/coffee/items/' + odrerid;
+    const myInit = {
+      body: {}, // replace this with attributes you need
+      headers: {
+        Authorization: `Bearer ${(await Auth.currentSession())
+          .getIdToken()
+          .getJwtToken()}`
+    }
+    };
+    return await API.del(apiName, path, myInit);
+  }
+
+  const handleCancelOrders = (event) =>{
+    event.preventDefault();
+    for (const odrerid of selectedOrderIds) {
+      cancelOrder(odrerid)
+    }
+  }
+
+  
+  const handleSelectedOption = (event) => {
+    setSelectedOption(event.target.checked);
     setInput('coffee', event.target.value);
   }
 
-  const handleFlatWhiteCheckboxChange = (event) => {
-    setFlatwhiteChecked(event.target.checked);
-    setInput('coffee', event.target.value);
-  }
-
-  const handleCuppuccinoCheckboxChange = (event) => {
-    setCuppuccinoChecked(event.target.checked);
-    setInput('coffee', event.target.value);
-  }
-
-  const handleHotChocolateChecke = (event) => {
-    setHotChocolateChecked(event.target.checked);
-    setInput('coffee', event.target.value);
-  }
-
+  const handleCheckboxChange = orderid => {
+    if (selectedOrderIds.includes(orderid)) {
+      setSelectedOrderIds(selectedOrderIds.filter(i => i !== orderid));
+    } else {
+      setSelectedOrderIds([...selectedOrderIds, orderid]);
+    }
+  };
 
   return (
     <div style={styles.container}>
-      <Heading level={1}>Welcome {user.username}</Heading>
+      <Heading level={2}>Welcome {user.username}</Heading>
       <Button onClick={signOut} style={styles.button}>Sign out</Button>
       <h2> Order Your Coffee </h2>
       <form onSubmit={handleSumit}>
@@ -136,59 +148,49 @@ function App({ signOut, user }) {
             placeholder="coffee"
           />
           <br></br>
-          <label>
-            <input
-              type="checkbox"
-              checked={checkedLattee}
-              value="Lattee"
-              style={styles.checkbox}
-              onChange={handleLatteeCheckboxChange}
-            />
-            Latte
-          </label>
+          <label for="coffee_choice">Select Your Coffee: </label>
+          <select
+            value={selectedOption}
+            onChange={handleSelectedOption}
+            style={styles.select}
+          >
+            <option value="Cuppuccino">Cuppuccino</option>
+            <option value="HotChocolate">Hot Chocolate</option>
+            <option value="FlatWhite">Flat White</option>
+            <option value="Lattee">Lattee</option>
+          </select>
           <br></br>
-          <label>
-            <input
-              type="checkbox"
-              checked={checkedFlatWhite}
-              value="Flat White"
-              style={styles.checkbox}
-              onChange={handleFlatWhiteCheckboxChange}
-            />
-            Flat White
-          </label>
-          <br></br>
-          <label>
-            <input
-              type="checkbox"
-              checked={checkedCuppuccino}
-              value="Cuppuccino"
-              style={styles.checkbox}
-              onChange={handleCuppuccinoCheckboxChange}
-            />
-            Cuppuccino
-          </label>
-          <br></br>
-          <label>
-            <input
-              type="checkbox"
-              checked={checkedHotChocolate}
-              value="HotChocolate"
-              style={styles.checkbox}
-              onChange={handleHotChocolateChecke}
-            />
-            HotChocolate
-          </label>
-          <br></br>
-          <button type="submit">Submit</button>
+          <button type="submit" style={styles.submitbutton}>Submit</button>
       </form>
-      <h3> Your Orders </h3>
-      {data ? (
-        <pre>{data} </pre>
-      ) : (
-        <p>Loading data...</p>
-      )}
-      <p>{error} </p>
+      <h3> Your Current Orders </h3>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.tableth}></th>
+            <th style={styles.tableth}>Order ID</th>
+            <th style={styles.tableth}>Coffee</th>
+          </tr>
+        </thead>
+        <tbody>
+          {jsonObjects.map(obj => (
+            <tr key={obj.oderid}>
+              <td>
+              <input
+                type="checkbox"
+                value={obj.orderid}
+                style={styles.checkbox}
+                onChange={() => handleCheckboxChange(obj.orderid)}
+              />
+            </td>
+              <td style={styles.tabletd}>{obj.orderid}</td>
+              <td style={styles.tabletd}>{obj.coffee}</td>
+            </tr>
+          ))}
+        </tbody>   
+       </table>
+       <p>{error} </p>
+       <br></br>
+       <Button onClick={handleCancelOrders} style={styles.submitbutton}>Cancel Order</Button>
     </div>
   )
 }
@@ -196,8 +198,13 @@ function App({ signOut, user }) {
 const styles = {
   container: { width: 400, margin: '0 auto', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 20 },
   input: { border: 'none', backgroundColor: '#ddd', marginBottom: 10, padding: 8, fontSize: 18 },
-  button: { backgroundColor: 'black', color: 'white', outline: 'none', fontSize: 16, padding: '12px 0px' },
-  checkbox: {margin: '5px', width: '30px', height: '12px', border: '2px solid black', backgroundColor: 'green'}
+  button: { backgroundColor: '#268db9', color: 'white', outline: 'none', fontSize: 15, padding: '12px 0px'},
+  submitbutton: { backgroundColor: '#268db9', color: 'white', outline: 'none', fontSize: 15, padding: '2px 5px', width: 240, border: 'none', borderRadius: '2px'},
+  checkbox: {margin: 5, width: 30, height: 12, border: '2px solid black', backgroundColor: 'green'},
+  select: {margin: 5, width: 180, fontSize: 15, padding: 3, border: '2px solid #ccc', borderRadius: '2px', backgroundColor: '#ddd', appearance: 'auto'},
+  table: {border: '1px solid black',  backgroundColor: '#268db9', fontFamily: 'Arial, sans-serif',fontSize: 15, borderCollapse: 'collapse', color: 'white'},
+  tableth: { margin: 5, border: '1px solid white', borderCollapse: 'collapse', padding: 5, textAlign: 'left'},
+  tabletd: { margin: 5, border: '1px solid white', borderCollapse: 'collapse', padding: 5, textAlign: 'left'}
 }
 
 export default withAuthenticator(App);
