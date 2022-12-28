@@ -27,7 +27,7 @@ Amplify.configure({
 });
 
 //const APIEndPoint = 'https://o78zg3fl3j.execute-api.ap-southeast-2.amazonaws.com/dev/coffee';
-const initialState = { "userid": '', "coffee": 'Cuppuccino' };
+const initialState = { "userid": '', "coffee": '' };
 
 
 function App({ signOut, user }) {
@@ -47,7 +47,7 @@ function App({ signOut, user }) {
   const [selectedOption, setSelectedOption] = useState(null);
 
   //for handleSumit API response
-   const [postDataResponse, setDataPostResponse] = useState(null);
+  const [postDataResponse, setDataPostResponse] = useState(null);
 
   //for cancelData() function's input
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
@@ -83,6 +83,7 @@ function App({ signOut, user }) {
   //postData
   const handleSumit = async (event) => {
     event.preventDefault();
+    
     try {
       const apiName = 'api960f605b';
       const path = '/coffee';
@@ -95,12 +96,11 @@ function App({ signOut, user }) {
         }
       };
       //console.log(formData);
-      const dataResponse = await API.post(apiName, path, myInit); 
+      const postDataResponse = await API.post(apiName, path, myInit); 
       //interestingly the API response is a JSON object
-      const postDataResponse = JSON.stringify(dataResponse);
       //console.log("postDataResponse: "+ postDataResponse);
       setDataPostResponse(postDataResponse);
-      openPopup(dataResponse)
+      openPopup(postDataResponse)
     } catch (error) {
       console.log(error);
     }
@@ -113,9 +113,9 @@ function App({ signOut, user }) {
   };
   
   //cancelorder
-  async function cancelOrder(odrerid) {
+  async function cancelOrder(orderid) {
     const apiName = 'api960f605b';
-    const path = '/coffee/items/' + odrerid;
+    const path = '/coffee/items/' + orderid;
     const myInit = {
       body: {}, // replace this with attributes you need
       headers: {
@@ -129,9 +129,11 @@ function App({ signOut, user }) {
 
   const handleCancelOrders = (event) =>{
     event.preventDefault();
-    for (const odrerid of selectedOrderIds) {
-      cancelOrder(odrerid)
+    console.log("selectedOrderIds: " + selectedOrderIds)
+    for (const orderid of selectedOrderIds) {
+      cancelOrder(orderid);
     }
+    window.location.reload();
   }
 
   
@@ -186,7 +188,7 @@ function App({ signOut, user }) {
         </thead>
         <tbody>
           {jsonObjects.map(obj => (
-            <tr key={obj.oderid}>
+            <tr key={obj.orderid}>
               <td>
               <input
                 type="checkbox"
